@@ -8,6 +8,8 @@ public partial class FrmMain : Form
 
     List<Allat> allatok = [];
 
+    IEnumerable<Allat> szurtAllatok = null;
+
     public FrmMain()
     {
         InitializeComponent();
@@ -20,17 +22,49 @@ public partial class FrmMain : Form
         DgvFeltoltese(allatok);
         CbxFeltoltes();
         btnSzures.Click += BtnSzuresClick;
+        btnOsszes.Click += BtnOsszesClick;
+        btnStatisztika.Click += BtnStatisztikaClick;
+    }
+
+    private void BtnStatisztikaClick(object? sender, EventArgs e)
+    {
+        float avgEletkor = 0F;
+        if (szurtAllatok is null)
+        {
+            avgEletkor = allatok.Average(a => a.Eletkor);
+        }
+        else avgEletkor = szurtAllatok.Average(a => a.Eletkor);
+
+        lblSatisztika.Text = 
+            $"állatok száma: {(szurtAllatok is null ? allatok.Count : szurtAllatok.Count())}\n" +
+            $"a kijelölt állatok átlagos életkora: {avgEletkor: 0.00} év";
+    }
+
+    private void BtnOsszesClick(object? sender, EventArgs e)
+    {
+        DgvFeltoltese(allatok);
+        szurtAllatok = null;
     }
 
     private void BtnSzuresClick(object? sender, EventArgs e)
     {
-        if (cbxGondozok.Text == "összes...")
+        bool minValid = int.TryParse(txtMinKor.Text, out int minKor);
+        bool maxValid = int.TryParse(txtMaxKor.Text, out int maxKor);
+
+        if (!minValid || !maxValid)
         {
-            DgvFeltoltese(allatok);
+            _ = MessageBox.Show(
+                text: "Az életkor-határérték csak egész szám lehet!",
+                icon: MessageBoxIcon.Error,
+                buttons: MessageBoxButtons.OK,
+                caption: "Hibás bevitel!");
             return;
         }
 
-        var szurtAllatok = allatok.Where(a => a.Gondozo.Nev == cbxGondozok.SelectedItem!.ToString());
+        szurtAllatok = allatok.Where(
+            a => a.Gondozo.Nev == cbxGondozok.SelectedItem!.ToString()
+            && a.Eletkor >= minKor && a.Eletkor <= maxKor);
+
         DgvFeltoltese(szurtAllatok);
     }
 
